@@ -8,8 +8,8 @@ config.read('config.cfg')
 TWITCH_STREAMS_ENDPOINT = "https://api.twitch.tv/helix/streams"
 TWITCH_USERS_ENDPOINT = "https://api.twitch.tv/helix/users"
 HEADERS = {
-    "Client-ID": config['DEFAULT']['TWITCH_CLIENT_ID'],
-    "Authorization": f"Bearer {config['DEFAULT']['TWITCH_OAUTH_TOKEN']}"
+    "Client-ID": config['TWITCH']['CLIENT_ID'],
+    "Authorization": f"Bearer {config['TWITCH']['OAUTH_TOKEN']}"
 }
 
 

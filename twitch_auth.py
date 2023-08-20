@@ -12,16 +12,16 @@ def refresh_twitch_token():
     # Request new tokens
     response = httpx.post(TOKEN_ENDPOINT, data={
         'grant_type': 'refresh_token',
-        'refresh_token': config['DEFAULT']['TWITCH_REFRESH_TOKEN'],
-        'client_id': config['DEFAULT']['TWITCH_CLIENT_ID'],
-        'client_secret': config['DEFAULT']['TWITCH_CLIENT_SECRET']
+        'refresh_token': config['TWITCH']['REFRESH_TOKEN'],
+        'client_id': config['TWITCH']['CLIENT_ID'],
+        'client_secret': config['TWITCH']['CLIENT_SECRET']
     })
 
     data = response.json()
 
     # Update config with new tokens
-    config['DEFAULT']['TWITCH_OAUTH_TOKEN'] = data['access_token']
-    config['DEFAULT']['TWITCH_REFRESH_TOKEN'] = data['refresh_token']
+    config['TWITCH']['OAUTH_TOKEN'] = data['access_token']
+    config['TWITCH']['REFRESH_TOKEN'] = data['refresh_token']
 
     with open('config.cfg', 'w') as file:
         config.write(file)

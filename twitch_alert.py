@@ -10,8 +10,8 @@ stream_timestamps = {}
 async def check_twitch_streams(bot, config):
     print("Checking Twitch streams.")
 
-    ALERT_CHANNEL_ID = int(config['DEFAULT']['DISCORD_ALERT_CHANNEL_ID'])
-    ROLE_TO_PING = int(config['DEFAULT']['ROLE_TO_PING'])
+    ALERT_CHANNEL_ID = int(config['DISCORD']['ALERT_CHANNEL_ID'])
+    ROLE_TO_PING = int(config['DISCORD']['ROLE_TO_PING'])
     TWITCH_ACCOUNTS = [section for section in config.sections() if section != 'DEFAULT']
 
     channel = bot.get_channel(ALERT_CHANNEL_ID)

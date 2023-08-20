@@ -8,7 +8,7 @@ from twitch_auth import refresh_twitch_token
 config = configparser.ConfigParser()
 config.read('config.cfg')
 
-TOKEN = config['DEFAULT']['DISCORD_TOKEN']
+TOKEN = config['DISCORD']['TOKEN']
 
 # Initialize bot
 intents = discord.Intents.default()
