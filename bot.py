@@ -22,11 +22,15 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f'{bot.user.name} has connected!')
     auto_refresh_token.start()
-    await start_twitch_alerts(bot, config)
+
+    # Check if Twitch alerts are enabled in the config
+    if config['TWITCH'].getboolean('ENABLE_TWITCH_ALERTS', fallback=False):
+        await start_twitch_alerts(bot, config)
 
 
 @tasks.loop(hours=3.5)  # Run every 3.5 hours to be safe
 async def auto_refresh_token():
     refresh_twitch_token()
+
 
 bot.run(TOKEN)
