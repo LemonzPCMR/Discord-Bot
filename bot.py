@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import configparser
 from twitch_alert import start_twitch_alerts
 from twitch_auth import refresh_twitch_token
+from twitch_api import update_headers_with_new_token
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -28,9 +29,11 @@ async def on_ready():
         await start_twitch_alerts(bot, config)
 
 
+# doesn't refresh the token correctly.
 @tasks.loop(hours=3.5)  # Run every 3.5 hours to be safe
 async def auto_refresh_token():
-    refresh_twitch_token()
+    new_access_token, new_refresh_token = refresh_twitch_token()
+    update_headers_with_new_token(new_access_token)
 
 
 bot.run(TOKEN)

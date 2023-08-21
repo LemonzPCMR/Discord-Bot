@@ -19,11 +19,18 @@ def refresh_twitch_token():
 
     data = response.json()
 
-    # Update config with new tokens
-    config['TWITCH']['OAUTH_TOKEN'] = data['access_token']
-    config['TWITCH']['REFRESH_TOKEN'] = data['refresh_token']
+    # Check if the response was successful and contains the expected keys
+    if response.status_code == 200 and 'access_token' in data and 'refresh_token' in data:
+        # Update config with new tokens
+        config['TWITCH']['OAUTH_TOKEN'] = data['access_token']
+        config['TWITCH']['REFRESH_TOKEN'] = data['refresh_token']
 
-    with open('config.cfg', 'w') as file:
-        config.write(file)
+        with open('config.cfg', 'w') as file:
+            config.write(file)
 
-    print("Tokens refreshed!")
+        print("Tokens refreshed!")
+        return data['access_token'], data['refresh_token']
+    else:
+        print(f"Error refreshing tokens. Status Code: {response.status_code}")
+        return None, None
+

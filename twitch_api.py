@@ -13,6 +13,11 @@ HEADERS = {
 }
 
 
+def update_headers_with_new_token(new_token):
+    global HEADERS
+    HEADERS["Authorization"] = f"Bearer {new_token}"
+
+
 def check_if_live(username):
     params = {"user_login": username}
     response = httpx.get(TWITCH_STREAMS_ENDPOINT, headers=HEADERS, params=params)
