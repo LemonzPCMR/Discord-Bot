@@ -4,6 +4,9 @@ import configparser
 from twitch_alert import start_twitch_alerts
 from twitch_auth import refresh_twitch_token
 from twitch_api import update_headers_with_new_token
+from database import initialize_guild_tables
+from commands import setup_commands
+
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -17,12 +20,16 @@ intents.message_content = True
 intents.members = True
 intents.presences = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+setup_commands(bot)
 
 
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected!')
     auto_refresh_token.start()
+
+    # Initialize tables for each guild
+    initialize_guild_tables(bot.guilds)
 
     # Check if Twitch alerts are enabled in the config
     if config['TWITCH'].getboolean('ENABLE_TWITCH_ALERTS', fallback=False):
