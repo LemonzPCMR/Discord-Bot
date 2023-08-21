@@ -1,9 +1,13 @@
 from discord.ext import tasks
 from twitch_api import check_if_live
 from embed_handler import create_live_embed
+import configparser
 
 # This dictionary will keep track of streams' timestamps.
 stream_timestamps = {}
+
+twitch_alerts = configparser.ConfigParser()
+twitch_alerts.read('twitch_alerts.cfg')
 
 
 @tasks.loop(minutes=1)  # Check every 10 minutes
@@ -12,13 +16,13 @@ async def check_twitch_streams(bot, config):
 
     ALERT_CHANNEL_ID = int(config['TWITCH']['ALERT_CHANNEL_ID'])
     ROLE_TO_PING = int(config['TWITCH']['ROLE_TO_PING'])
-    TWITCH_ACCOUNTS = [section for section in config.sections() if section != 'DEFAULT']
+    TWITCH_ACCOUNTS = [section for section in twitch_alerts.sections() if section != 'DEFAULT']
 
     channel = bot.get_channel(ALERT_CHANNEL_ID)
     role = bot.get_guild(channel.guild.id).get_role(ROLE_TO_PING)
 
     for username in TWITCH_ACCOUNTS:
-        custom_message = config[username]['custom_message']
+        custom_message = twitch_alerts[username]['custom_message']
         is_live, stream_data = check_if_live(username)
 
         current_timestamp = stream_data["started_at"] if stream_data else None
