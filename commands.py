@@ -1,45 +1,52 @@
-from discord.ext import commands
-from database import add_data_to_guild_table, remove_data_from_guild_table, retrieve_all_data_from_guild_table
+from database import add_or_update_account, remove_account, update_settings
+from discord import Object
+from database import guild_settings, guild_accounts
 
 
-def setup_commands(bot):
-    @bot.command(name='adduser')
-    async def add_user(ctx, username: str, *, comment: str = "Hey, I'm live now!"):
-        """Add or update a user in the database with an optional comment."""
-        guild_id = ctx.guild.id
-        data = retrieve_all_data_from_guild_table(guild_id)
+def setup(tree):
+    @tree.command(name="twitch_adduser", description="Add or update a user in the database with an optional comment.", guild=Object(id=956285726738219098))
+    async def twitch_adduser(interaction, username: str, comment: str = "Hey, I'm live now!"):
+        guild_id = interaction.guild.id
+        add_or_update_account(guild_id, username, comment)
+        await interaction.response.send_message(f"Added/Updated {username} with comment: {comment}")
+
+    @tree.command(name="twitch_removeuser", description="Remove a user from the database based on their username.", guild=Object(id=956285726738219098))
+    async def twitch_removeuser(interaction, username: str):
+        guild_id = interaction.guild.id
+        remove_account(guild_id, username)
+        await interaction.response.send_message(f"Removed {username} from the database.")
+
+    @tree.command(name="twitch_list", description="List all usernames in the database.", guild=Object(id=956285726738219098))
+    async def twitch_list(interaction):
+        guild_id = interaction.guild.id
+        data = guild_accounts.get(guild_id, [])
         usernames = [row[0] for row in data]
+        await interaction.response.send_message(", ".join(usernames) or "No users in the database.")
 
-        add_data_to_guild_table(guild_id, username, comment)
-        if username in usernames:
-            await ctx.send(f"Updated {username}'s comment to: {comment}")
-        else:
-            await ctx.send(f"Added {username} with comment: {comment}")
+    @tree.command(name="twitch_channel", description="Update the Twitch alert channel.", guild=Object(id=956285726738219098))
+    async def twitch_channel(interaction, channel_id: str):
+        guild_id = interaction.guild.id
+        current_settings = guild_settings[guild_id]
+        update_settings(guild_id, current_settings["enable_twitch_alerts"], current_settings["enable_twitch_ping"], channel_id, current_settings["twitch_ping_role"])
+        await interaction.response.send_message(f"Updated Twitch alert channel to: {channel_id}")
 
-    @bot.command(name='removeuser')
-    async def remove_user(ctx, username: str):
-        """Remove a user from the database based on their username."""
-        guild_id = ctx.guild.id
-        data = retrieve_all_data_from_guild_table(guild_id)
-        usernames = [row[0] for row in data]
+    @tree.command(name="twitch_role", description="Update the Twitch ping role.", guild=Object(id=956285726738219098))
+    async def twitch_role(interaction, role_id: str):
+        guild_id = interaction.guild.id
+        current_settings = guild_settings[guild_id]
+        update_settings(guild_id, current_settings["enable_twitch_alerts"], current_settings["enable_twitch_ping"], current_settings["twitch_alert_channel"], role_id)
+        await interaction.response.send_message(f"Updated Twitch ping role to: {role_id}")
 
-        if username in usernames:
-            remove_data_from_guild_table(guild_id, username)
-            await ctx.send(f"Removed {username} from the database.")
-        else:
-            await ctx.send(f"{username} does not exist in the database.")
+    @tree.command(name="twitch_ping", description="Enable or disable Twitch pings.", guild=Object(id=956285726738219098))
+    async def twitch_ping(interaction, enable: bool):
+        guild_id = interaction.guild.id
+        current_settings = guild_settings[guild_id]
+        update_settings(guild_id, current_settings["enable_twitch_alerts"], enable, current_settings["twitch_alert_channel"], current_settings["twitch_ping_role"])
+        await interaction.response.send_message(f"Set Twitch ping to: {enable}")
 
-    @bot.command(name='listusers')
-    async def list_users(ctx):
-        """List all usernames in the database."""
-        guild_id = ctx.guild.id
-        data = retrieve_all_data_from_guild_table(guild_id)
-        usernames = [row[0] for row in data]
-        await ctx.send(", ".join(usernames) or "No users in the database.")
-
-    # Error handling for missing arguments
-    @add_user.error
-    @remove_user.error
-    async def user_command_error(ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Missing arguments! Please provide the necessary information.")
+    # @tree.command(name="twitch_enable", description="Enable or disable Twitch alerts.", guild=Object(id=956285726738219098))
+    # async def twitch_enable(interaction, enable: bool):
+    #     guild_id = interaction.guild.id
+    #     current_settings = guild_settings[guild_id]
+    #     update_settings(guild_id, enable, current_settings["enable_twitch_ping"], current_settings["twitch_alert_channel"], current_settings["twitch_ping_role"])
+    #     await interaction.response.send_message(f"Set Twitch alerts to: {enable}")

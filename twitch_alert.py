@@ -1,39 +1,43 @@
 from discord.ext import tasks
 from twitch_api import check_if_live
 from embed_handler import create_live_embed
-from database import retrieve_all_data_from_guild_table
+from database import guild_settings, guild_accounts
 
 # This dictionary will keep track of streams' timestamps.
 stream_timestamps = {}
 
-@tasks.loop(minutes=1)  # Check every 1 minutes
-async def check_twitch_streams(bot, config):
+
+@tasks.loop(minutes=1)  # Check every 1 minute
+async def check_twitch_streams(bot):
     print("Checking Twitch streams.")
 
-    ALERT_CHANNEL_ID = int(config['TWITCH']['ALERT_CHANNEL_ID'])
-    ROLE_TO_PING = int(config['TWITCH']['ROLE_TO_PING'])
-    ENABLE_TWITCH_PING = config['DEFAULT'].getboolean('enable_twitch_ping', fallback=False)
+    for guild_id, settings in guild_settings.items():
+        ALERT_CHANNEL_ID = settings["twitch_alert_channel"]
+        ROLE_TO_PING = settings["twitch_ping_role"]
+        ENABLE_TWITCH_PING = settings["enable_twitch_ping"]
 
-    channel = bot.get_channel(ALERT_CHANNEL_ID)
-    role = bot.get_guild(channel.guild.id).get_role(ROLE_TO_PING)
+        channel = bot.get_channel(ALERT_CHANNEL_ID)
+        role = bot.get_guild(guild_id).get_role(ROLE_TO_PING)
 
-    # Fetch usernames and comments from the database for the current guild
-    guild_data = retrieve_all_data_from_guild_table(channel.guild.id)
+        # Fetch usernames and comments from the global variable for the current guild
+        guild_data = guild_accounts.get(guild_id, [])
 
-    for username, custom_message in guild_data:
-        is_live, stream_data = check_if_live(username)
+        for _, username, custom_message in guild_data:
 
-        current_timestamp = stream_data["started_at"] if stream_data else None
+            is_live, stream_data = check_if_live(username)
 
-        # Check if the timestamp has changed or if it's a new streamer we haven't seen.
-        if is_live and (username not in stream_timestamps or stream_timestamps[username] != current_timestamp):
-            embed = create_live_embed(stream_data, custom_message)
-            message_content = f"{role.mention}" if ENABLE_TWITCH_PING else ""
-            await channel.send(message_content, embed=embed)
-            stream_timestamps[username] = current_timestamp
+            current_timestamp = stream_data["started_at"] if stream_data else None
 
-        elif not is_live and username in stream_timestamps:
-            del stream_timestamps[username]  # Remove the streamer from the timestamp dict if they're offline.
+            # Check if the timestamp has changed or if it's a new streamer we haven't seen.
+            if is_live and (username not in stream_timestamps or stream_timestamps[username] != current_timestamp):
+                embed = create_live_embed(stream_data, custom_message)
+                message_content = f"{role.mention}" if ENABLE_TWITCH_PING else ""
+                await channel.send(message_content, embed=embed)
+                stream_timestamps[username] = current_timestamp
 
-async def start_twitch_alerts(bot, config):
-    check_twitch_streams.start(bot, config)
+            elif not is_live and username in stream_timestamps:
+                del stream_timestamps[username]  # Remove the streamer from the timestamp dict if they're offline.
+
+
+async def start_twitch_alerts(bot):
+    check_twitch_streams.start(bot)
