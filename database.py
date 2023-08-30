@@ -33,7 +33,6 @@ def initialize_guild_tables(guilds):
         cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS "{guild.id}_settings" (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            enable_twitch_alerts BOOLEAN DEFAULT FALSE,
             enable_twitch_ping BOOLEAN DEFAULT FALSE,
             twitch_alert_channel INTEGER DEFAULT 0000,
             twitch_ping_role INTEGER DEFAULT 0000
@@ -42,8 +41,8 @@ def initialize_guild_tables(guilds):
 
         # Insert a default row into the settings table
         cursor.execute(f'''
-        INSERT OR IGNORE INTO "{guild.id}_settings" (id, enable_twitch_alerts, enable_twitch_ping, twitch_alert_channel, twitch_ping_role)
-        VALUES (1, FALSE, FALSE, 0000, 0000)
+        INSERT OR IGNORE INTO "{guild.id}_settings" (id, enable_twitch_ping, twitch_alert_channel, twitch_ping_role)
+        VALUES (1, FALSE, 0000, 0000)
         ''')
 
     conn.commit()
@@ -82,17 +81,16 @@ def get_general_settings(guild_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        f'SELECT enable_twitch_alerts, enable_twitch_ping, twitch_alert_channel, twitch_ping_role FROM "{guild_id}_settings" WHERE id = 1')
+        f'SELECT enable_twitch_ping, twitch_alert_channel, twitch_ping_role FROM "{guild_id}_settings" WHERE id = 1')
     data = cursor.fetchone()
 
     conn.close()
 
     if data:
         return {
-            "enable_twitch_alerts": data[0],
-            "enable_twitch_ping": data[1],
-            "twitch_alert_channel": data[2],
-            "twitch_ping_role": data[3]
+            "enable_twitch_ping": data[0],
+            "twitch_alert_channel": data[1],
+            "twitch_ping_role": data[2]
         }
     else:
         return None
@@ -154,7 +152,7 @@ def remove_account(guild_id, account):
     # Settings Database Manipulation:
 
 
-def update_settings(guild_id, enable_twitch_alerts, enable_twitch_ping, twitch_alert_channel, twitch_ping_role):
+def update_settings(guild_id, enable_twitch_ping, twitch_alert_channel, twitch_ping_role):
     """Update the settings for a specific guild and update the global variable."""
     global guild_settings
 
@@ -166,14 +164,13 @@ def update_settings(guild_id, enable_twitch_alerts, enable_twitch_ping, twitch_a
     UPDATE "{guild_id}_settings"
     SET enable_twitch_alerts = ?, enable_twitch_ping = ?, twitch_alert_channel = ?, twitch_ping_role = ?
     WHERE id = 1
-    ''', (enable_twitch_alerts, enable_twitch_ping, twitch_alert_channel, twitch_ping_role))
+    ''', (enable_twitch_ping, twitch_alert_channel, twitch_ping_role))
 
     conn.commit()
     conn.close()
 
     # Update the global variable for this specific guild
     guild_settings[guild_id] = {
-        "enable_twitch_alerts": enable_twitch_alerts,
         "enable_twitch_ping": enable_twitch_ping,
         "twitch_alert_channel": twitch_alert_channel,
         "twitch_ping_role": twitch_ping_role

@@ -2,11 +2,11 @@ import discord
 from discord import app_commands
 from discord.ext import tasks
 import configparser
+from twitch_alert import start_twitch_alerts
 from twitch_auth import refresh_twitch_token
 from twitch_api import update_headers_with_new_token
 from database import initialize_guild_tables, load_guild_data_into_memory
 from commands import setup
-from initialize_modules import initialize_twitch_alerts
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -30,7 +30,7 @@ async def on_ready():
     print(f'{bot.user.name} has connected!')
 
     # Start commands
-    await tree.sync(guild=discord.Object(id=956285726738219098))
+    await tree.sync(guild=discord.Object(id=891586139922776094))
 
     auto_refresh_token.start()
 
@@ -41,7 +41,7 @@ async def on_ready():
     load_guild_data_into_memory()
 
     # Initialize Twitch alerts
-    await initialize_twitch_alerts(bot)
+    await start_twitch_alerts(bot)
 
 
 @tasks.loop(hours=3.5)  # Run every 3.5 hours to be safe
