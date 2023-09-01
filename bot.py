@@ -7,7 +7,6 @@ from twitch_api import update_headers_with_new_token
 from database import initialize_guild_tables, load_guild_data_into_memory
 from commands import setup
 from twitch_alert import start_twitch_alerts
-from utils import force_load_guild as flg
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -31,7 +30,7 @@ async def on_ready():
     print(f'{bot.user.name} has connected!')
 
     # Start commands
-    await tree.sync(guild=discord.Object(id=flg))
+    await tree.sync()
 
     auto_refresh_token.start()
 
