@@ -30,7 +30,7 @@ async def on_ready():
     print(f'{bot.user.name} has connected!')
 
     # Start commands
-    await tree.sync(guild=discord.Object(id=891586139922776094))
+    await tree.sync(guild=discord.Object(id=flg))
 
     auto_refresh_token.start()
 
