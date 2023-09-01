@@ -33,6 +33,7 @@ def initialize_guild_tables(guilds):
         cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS "{guild.id}_settings" (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            enable_twitch_alerts BOOLEAN DEFAULT FALSE,
             enable_twitch_ping BOOLEAN DEFAULT FALSE,
             twitch_alert_channel INTEGER DEFAULT 0000,
             twitch_ping_role INTEGER DEFAULT 0000
@@ -41,8 +42,8 @@ def initialize_guild_tables(guilds):
 
         # Insert a default row into the settings table
         cursor.execute(f'''
-        INSERT OR IGNORE INTO "{guild.id}_settings" (id, enable_twitch_ping, twitch_alert_channel, twitch_ping_role)
-        VALUES (1, FALSE, 0000, 0000)
+        INSERT OR IGNORE INTO "{guild.id}_settings" (id, enable_twitch_alerts, enable_twitch_ping, twitch_alert_channel, twitch_ping_role)
+        VALUES (1, FALSE, FALSE, 0000, 0000)
         ''')
 
     conn.commit()
@@ -81,16 +82,17 @@ def get_general_settings(guild_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        f'SELECT enable_twitch_ping, twitch_alert_channel, twitch_ping_role FROM "{guild_id}_settings" WHERE id = 1')
+        f'SELECT enable_twitch_alerts, enable_twitch_ping, twitch_alert_channel, twitch_ping_role FROM "{guild_id}_settings" WHERE id = 1')
     data = cursor.fetchone()
 
     conn.close()
 
     if data:
         return {
-            "enable_twitch_ping": data[0],
-            "twitch_alert_channel": data[1],
-            "twitch_ping_role": data[2]
+            "enable_twitch_alerts": data[0],
+            "enable_twitch_ping": data[1],
+            "twitch_alert_channel": data[2],
+            "twitch_ping_role": data[3]
         }
     else:
         return None
@@ -152,27 +154,38 @@ def remove_account(guild_id, account):
     # Settings Database Manipulation:
 
 
-def update_settings(guild_id, enable_twitch_ping, twitch_alert_channel, twitch_ping_role):
-    """Update the settings for a specific guild and update the global variable."""
+def update_settings(guild_id, setting_to_update, value):
+    """Update a specific setting for a guild and update the global variable."""
     global guild_settings
+
+    # Map the setting name to its corresponding column in the database
+    column_map = {
+        "enable_twitch_alerts": "enable_twitch_alerts",
+        "enable_twitch_ping": "enable_twitch_ping",
+        "twitch_alert_channel": "twitch_alert_channel",
+        "twitch_ping_role": "twitch_ping_role"
+    }
+
+    column_name = column_map.get(setting_to_update)
+    if not column_name:
+        raise ValueError(f"Invalid setting: {setting_to_update}")
 
     conn = sqlite3.connect(TWITCH_DB_PATH)
     cursor = conn.cursor()
 
-    # Update the settings in the database
+    # Update the specific column in the database
     cursor.execute(f'''
     UPDATE "{guild_id}_settings"
-    SET enable_twitch_alerts = ?, enable_twitch_ping = ?, twitch_alert_channel = ?, twitch_ping_role = ?
+    SET {column_name} = ?
     WHERE id = 1
-    ''', (enable_twitch_ping, twitch_alert_channel, twitch_ping_role))
+    ''', (value,))
 
     conn.commit()
     conn.close()
 
     # Update the global variable for this specific guild
-    guild_settings[guild_id] = {
-        "enable_twitch_ping": enable_twitch_ping,
-        "twitch_alert_channel": twitch_alert_channel,
-        "twitch_ping_role": twitch_ping_role
-    }
+    if guild_id not in guild_settings:
+        guild_settings[guild_id] = {}
+    guild_settings[guild_id][setting_to_update] = value
+
 
