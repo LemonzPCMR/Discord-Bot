@@ -187,5 +187,4 @@ def update_settings(guild_id, setting_to_update, value):
     if guild_id not in guild_settings:
         guild_settings[guild_id] = {}
     guild_settings[guild_id][setting_to_update] = value
-
-
+    print(f"{guild_id}{setting_to_update} = {value}")

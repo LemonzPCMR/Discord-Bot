@@ -16,6 +16,8 @@ TOKEN = config['DISCORD']['TOKEN']
 
 # Initialize bot
 intents = discord.Intents.default()
+intents.guilds = True
+intents.messages = True
 intents.message_content = True
 intents.members = True
 intents.presences = True
@@ -27,7 +29,6 @@ setup(tree)
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user.name} has connected!')
 
     # Start commands
     await tree.sync()
